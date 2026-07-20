@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { MIN_INPUT_LENGTH, type AnalysisResult } from "@/lib/types";
+import AnalysisResults from "./AnalysisResults";
 
 export default function MatchPage() {
   const [resume, setResume] = useState("");
@@ -93,11 +94,7 @@ export default function MatchPage() {
         </p>
       )}
 
-      {result && (
-        <pre className="mt-6 overflow-auto rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900">
-          {JSON.stringify(result, null, 2)}
-        </pre>
-      )}
+      {result && <AnalysisResults result={result} />}
     </main>
   );
 }
