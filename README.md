@@ -34,6 +34,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+Run the tests with:
+
+```bash
+npm test
+```
+
 ## Environment
 
 | Variable          | Description                                            |
