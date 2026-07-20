@@ -14,7 +14,7 @@ costs nothing to run.
 - [x] Project scaffold (Next.js 16, TypeScript, Tailwind)
 - [x] Landing page
 - [x] Resume + job-description input form (`/match`)
-- [ ] AI analysis endpoint (score, gap, bullets)
+- [x] AI analysis endpoint (score, gap, bullets)
 - [ ] Results view
 - [ ] Deploy to Vercel
 
