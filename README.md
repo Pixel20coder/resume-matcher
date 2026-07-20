@@ -15,7 +15,7 @@ costs nothing to run.
 - [x] Landing page
 - [x] Resume + job-description input form (`/match`)
 - [x] AI analysis endpoint (score, gap, bullets)
-- [ ] Results view
+- [x] Results view (score ring, skill chips, copyable bullets)
 - [ ] Deploy to Vercel
 
 ## Tech stack
