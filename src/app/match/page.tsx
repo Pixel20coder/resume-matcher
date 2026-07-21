@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { MIN_INPUT_LENGTH, type AnalysisResult } from "@/lib/types";
+import { SAMPLE_RESUME, SAMPLE_JOB } from "@/lib/sample";
 import AnalysisResults from "./AnalysisResults";
 
 export default function MatchPage() {
@@ -15,6 +16,21 @@ export default function MatchPage() {
   const resumeReady = resume.trim().length >= MIN_INPUT_LENGTH;
   const jobReady = jobDescription.trim().length >= MIN_INPUT_LENGTH;
   const canSubmit = resumeReady && jobReady && !loading;
+  const hasInput = resume.length > 0 || jobDescription.length > 0;
+
+  function loadSample() {
+    setResume(SAMPLE_RESUME);
+    setJobDescription(SAMPLE_JOB);
+    setError(null);
+    setResult(null);
+  }
+
+  function clearAll() {
+    setResume("");
+    setJobDescription("");
+    setError(null);
+    setResult(null);
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -54,6 +70,24 @@ export default function MatchPage() {
         <p className="mt-2 text-zinc-600 dark:text-zinc-400">
           Paste your resume and the job description you&apos;re targeting.
         </p>
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={loadSample}
+            className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+          >
+            Try with sample data
+          </button>
+          {hasInput && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="rounded-md px-3 py-1.5 text-xs font-medium text-zinc-500 transition hover:text-zinc-800 dark:hover:text-zinc-200"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="grid gap-6 sm:grid-cols-2">
