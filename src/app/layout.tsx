@@ -12,10 +12,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const title = "ResumeMatch — AI resume vs. job-description analyzer";
+const description =
+  "Paste your resume and a job description to get an instant AI match score, a skills gap analysis, and tailored bullet-point suggestions.";
+
 export const metadata: Metadata = {
-  title: "ResumeMatch — AI resume vs. job-description analyzer",
-  description:
-    "Paste your resume and a job description to get an instant AI match score, a skills gap analysis, and tailored bullet-point suggestions.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title,
+  description,
+  openGraph: { title, description, type: "website" },
+  twitter: { card: "summary_large_image", title, description },
 };
 
 export default function RootLayout({
