@@ -42,10 +42,24 @@ npm test
 
 ## Environment
 
-| Variable          | Description                                            |
-| ----------------- | ------------------------------------------------------ |
-| `NVIDIA_API_KEY`  | API key for the NVIDIA NIM OpenAI-compatible endpoint. |
-| `NVIDIA_BASE_URL` | Optional. Defaults to the NVIDIA integrate endpoint.   |
+| Variable              | Description                                              |
+| --------------------- | ------------------------------------------------------- |
+| `NVIDIA_API_KEY`      | API key for the NVIDIA NIM OpenAI-compatible endpoint.  |
+| `NVIDIA_BASE_URL`     | Optional. Defaults to the NVIDIA integrate endpoint.    |
+| `NVIDIA_MODEL`        | Optional. Defaults to `mistralai/mistral-7b-instruct-v0.3`. |
+| `NEXT_PUBLIC_SITE_URL`| Optional. Absolute base URL used for Open Graph links.  |
+
+## Reliability
+
+Model calls are hardened against the flakiness of a free hosted endpoint:
+
+- **Timeout** — each request is aborted after 30s (`REQUEST_TIMEOUT_MS`).
+- **Retries** — transient failures (network errors, timeouts, and HTTP
+  408/429/500/502/503/504) are retried up to twice with exponential backoff
+  (500ms, 1s). Non-transient errors like a 400 fail fast.
+- **Input limits** — each field must be between 50 and 20,000 characters; the
+  `/api/analyze` route rejects anything outside that range with a 400 before
+  spending any tokens.
 
 ## License
 

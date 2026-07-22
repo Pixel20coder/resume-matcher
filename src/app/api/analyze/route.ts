@@ -1,6 +1,6 @@
 import { analyze } from "@/lib/analyze";
 import { LlmError } from "@/lib/llm";
-import { MIN_INPUT_LENGTH, type AnalyzeRequest } from "@/lib/types";
+import { validateInput, type AnalyzeRequest } from "@/lib/types";
 
 export async function POST(request: Request): Promise<Response> {
   let body: Partial<AnalyzeRequest>;
@@ -10,18 +10,13 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const resume = typeof body.resume === "string" ? body.resume.trim() : "";
-  const jobDescription =
-    typeof body.jobDescription === "string" ? body.jobDescription.trim() : "";
-
-  if (resume.length < MIN_INPUT_LENGTH || jobDescription.length < MIN_INPUT_LENGTH) {
-    return Response.json(
-      { error: `Both fields need at least ${MIN_INPUT_LENGTH} characters.` },
-      { status: 400 },
-    );
+  const validation = validateInput(body.resume, body.jobDescription);
+  if (!validation.ok) {
+    return Response.json({ error: validation.error }, { status: 400 });
   }
 
   try {
+    const { resume, jobDescription } = validation.value;
     const result = await analyze(resume, jobDescription);
     return Response.json(result);
   } catch (err) {
