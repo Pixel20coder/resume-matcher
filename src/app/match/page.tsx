@@ -5,6 +5,7 @@ import { useState } from "react";
 import { MIN_INPUT_LENGTH, type AnalysisResult } from "@/lib/types";
 import { SAMPLE_RESUME, SAMPLE_JOB } from "@/lib/sample";
 import AnalysisResults from "./AnalysisResults";
+import ResultsSkeleton from "./ResultsSkeleton";
 
 export default function MatchPage() {
   const [resume, setResume] = useState("");
@@ -128,7 +129,8 @@ export default function MatchPage() {
         </p>
       )}
 
-      {result && <AnalysisResults result={result} />}
+      {loading && <ResultsSkeleton />}
+      {!loading && result && <AnalysisResults result={result} />}
     </main>
   );
 }
