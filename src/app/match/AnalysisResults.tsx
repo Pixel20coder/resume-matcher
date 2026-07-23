@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
+import { buildReport, reportFilename } from "@/lib/report";
 
 export default function AnalysisResults({ result }: { result: AnalysisResult }) {
   return (
@@ -13,6 +14,9 @@ export default function AnalysisResults({ result }: { result: AnalysisResult }) 
           <p className="mt-1 text-zinc-600 dark:text-zinc-400">
             {result.summary || "Here's how your resume lines up with the role."}
           </p>
+        </div>
+        <div className="sm:ml-auto">
+          <DownloadReport result={result} />
         </div>
       </div>
 
@@ -42,6 +46,35 @@ export default function AnalysisResults({ result }: { result: AnalysisResult }) 
         </div>
       )}
     </section>
+  );
+}
+
+function DownloadReport({ result }: { result: AnalysisResult }) {
+  const [saved, setSaved] = useState(false);
+
+  function download() {
+    const blob = new Blob([buildReport(result)], {
+      type: "text/markdown;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = reportFilename(result.score);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  }
+
+  return (
+    <button
+      onClick={download}
+      className="shrink-0 rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+    >
+      {saved ? "Saved" : "Download report"}
+    </button>
   );
 }
 

@@ -61,6 +61,14 @@ Model calls are hardened against the flakiness of a free hosted endpoint:
   `/api/analyze` route rejects anything outside that range with a 400 before
   spending any tokens.
 
+## Downloadable reports
+
+Every analysis can be saved as a self-contained Markdown report — score and
+verdict, matched/missing skills, and the tailored bullet suggestions. Click
+**Download report** in the results view to save a `resume-match-report-<score>.md`
+file to share or paste into notes. The report is built by a pure `buildReport()`
+helper in `src/lib/report.ts`, so it is unit-tested independently of the browser.
+
 ## License
 
 MIT © [Pixel20coder](https://github.com/Pixel20coder)
