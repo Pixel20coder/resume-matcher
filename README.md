@@ -69,6 +69,14 @@ verdict, matched/missing skills, and the tailored bullet suggestions. Click
 file to share or paste into notes. The report is built by a pure `buildReport()`
 helper in `src/lib/report.ts`, so it is unit-tested independently of the browser.
 
+## Saved sessions
+
+Your most recent analysis — the resume, the job description, and the result —
+is saved to `localStorage` and restored automatically the next time you open the
+page, so a refresh or a quick tab-close never loses your work. **Clear** wipes it.
+Serialization and validation live in a pure `src/lib/storage.ts` module (malformed
+or tampered data parses back to `null` and is ignored), unit-tested on its own.
+
 ## License
 
 MIT © [Pixel20coder](https://github.com/Pixel20coder)

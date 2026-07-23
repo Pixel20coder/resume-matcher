@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MIN_INPUT_LENGTH, type AnalysisResult } from "@/lib/types";
 import { SAMPLE_RESUME, SAMPLE_JOB } from "@/lib/sample";
+import { clearSession, loadSession, saveSession } from "@/lib/storage";
 import AnalysisResults from "./AnalysisResults";
 import ResultsSkeleton from "./ResultsSkeleton";
 
@@ -13,6 +14,20 @@ export default function MatchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [restored, setRestored] = useState(false);
+
+  // Restore the last analysis from a previous visit, once, on mount. localStorage
+  // is unavailable during SSR, so this hydration must happen in a client effect.
+  useEffect(() => {
+    const saved = loadSession();
+    if (!saved) return;
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time external-store hydration */
+    setResume(saved.resume);
+    setJobDescription(saved.jobDescription);
+    setResult(saved.result);
+    setRestored(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
 
   const resumeReady = resume.trim().length >= MIN_INPUT_LENGTH;
   const jobReady = jobDescription.trim().length >= MIN_INPUT_LENGTH;
@@ -24,6 +39,7 @@ export default function MatchPage() {
     setJobDescription(SAMPLE_JOB);
     setError(null);
     setResult(null);
+    setRestored(false);
   }
 
   function clearAll() {
@@ -31,6 +47,8 @@ export default function MatchPage() {
     setJobDescription("");
     setError(null);
     setResult(null);
+    setRestored(false);
+    clearSession();
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -50,7 +68,10 @@ export default function MatchPage() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? `Request failed (${res.status})`);
       }
-      setResult((await res.json()) as AnalysisResult);
+      const analysis = (await res.json()) as AnalysisResult;
+      setResult(analysis);
+      setRestored(false);
+      saveSession({ resume, jobDescription, result: analysis });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -126,6 +147,12 @@ export default function MatchPage() {
       {error && (
         <p className="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
           {error}
+        </p>
+      )}
+
+      {!loading && result && restored && (
+        <p className="mt-6 text-xs text-zinc-500">
+          Showing your last analysis from this browser. Edit and re-run to refresh it.
         </p>
       )}
 
