@@ -77,6 +77,15 @@ page, so a refresh or a quick tab-close never loses your work. **Clear** wipes i
 Serialization and validation live in a pure `src/lib/storage.ts` module (malformed
 or tampered data parses back to `null` and is ignored), unit-tested on its own.
 
+## Analysis history
+
+The last eight analyses are kept under a **Recent analyses** list (newest first).
+Click any entry to reopen its resume, job description, and result; re-running the
+same inputs replaces the old entry rather than piling up duplicates. **Clear
+history** wipes the list. The list logic — dedup, cap, labelling, and lenient
+parsing that skips malformed entries — lives in a pure `src/lib/history.ts`
+module with its own unit tests.
+
 ## License
 
 MIT © [Pixel20coder](https://github.com/Pixel20coder)

@@ -5,8 +5,23 @@ import { useEffect, useState } from "react";
 import { MIN_INPUT_LENGTH, type AnalysisResult } from "@/lib/types";
 import { SAMPLE_RESUME, SAMPLE_JOB } from "@/lib/sample";
 import { clearSession, loadSession, saveSession } from "@/lib/storage";
+import {
+  clearHistory,
+  entryLabel,
+  loadHistory,
+  pushHistory,
+  type HistoryEntry,
+} from "@/lib/history";
 import AnalysisResults from "./AnalysisResults";
 import ResultsSkeleton from "./ResultsSkeleton";
+
+/** A best-effort unique id that degrades gracefully without crypto. */
+function newId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${performance.now()}-${Math.round(performance.now() * 1000)}`;
+}
 
 export default function MatchPage() {
   const [resume, setResume] = useState("");
@@ -15,13 +30,15 @@ export default function MatchPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [restored, setRestored] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
 
-  // Restore the last analysis from a previous visit, once, on mount. localStorage
-  // is unavailable during SSR, so this hydration must happen in a client effect.
+  // Restore the last analysis and past runs from a previous visit, once, on mount.
+  // localStorage is unavailable during SSR, so this must happen in a client effect.
   useEffect(() => {
     const saved = loadSession();
-    if (!saved) return;
     /* eslint-disable react-hooks/set-state-in-effect -- one-time external-store hydration */
+    setHistory(loadHistory());
+    if (!saved) return;
     setResume(saved.resume);
     setJobDescription(saved.jobDescription);
     setResult(saved.result);
@@ -51,6 +68,24 @@ export default function MatchPage() {
     clearSession();
   }
 
+  function restoreEntry(entry: HistoryEntry) {
+    setResume(entry.resume);
+    setJobDescription(entry.jobDescription);
+    setResult(entry.result);
+    setError(null);
+    setRestored(true);
+    saveSession({
+      resume: entry.resume,
+      jobDescription: entry.jobDescription,
+      result: entry.result,
+    });
+  }
+
+  function wipeHistory() {
+    clearHistory();
+    setHistory([]);
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!canSubmit) return;
@@ -72,6 +107,15 @@ export default function MatchPage() {
       setResult(analysis);
       setRestored(false);
       saveSession({ resume, jobDescription, result: analysis });
+      setHistory(
+        pushHistory({
+          id: newId(),
+          savedAt: Date.now(),
+          resume,
+          jobDescription,
+          result: analysis,
+        }),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -158,6 +202,36 @@ export default function MatchPage() {
 
       {loading && <ResultsSkeleton />}
       {!loading && result && <AnalysisResults result={result} />}
+
+      {history.length > 0 && (
+        <section className="mt-12 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">
+              Recent analyses
+            </h2>
+            <button
+              type="button"
+              onClick={wipeHistory}
+              className="text-xs font-medium text-zinc-500 transition hover:text-zinc-800 dark:hover:text-zinc-200"
+            >
+              Clear history
+            </button>
+          </div>
+          <ul className="space-y-2">
+            {history.map((entry) => (
+              <li key={entry.id}>
+                <button
+                  type="button"
+                  onClick={() => restoreEntry(entry)}
+                  className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 text-left text-sm transition hover:border-indigo-400 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:border-indigo-600 dark:hover:bg-zinc-900"
+                >
+                  {entryLabel(entry)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }
