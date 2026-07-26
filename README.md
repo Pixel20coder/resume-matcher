@@ -96,6 +96,15 @@ through `parseAnalysis`, so a truncated or tampered link simply resolves to no
 shared result. The encode/decode core lives in a pure `src/lib/share.ts` module
 with its own unit tests — no server round-trip, nothing stored.
 
+## Suggestion tone
+
+A **Bullet tone** selector next to the Analyze button steers the voice of the
+tailored bullets: **impact** (metrics-driven, the default), **concise** (short and
+punchy), or **friendly** (warm, first-person). The choice rides along in the
+`/api/analyze` request and is appended to the model's system prompt; unknown or
+missing values fall back to `impact` server-side via `parseTone`. The tone→prompt
+mapping lives in `toneInstruction()` and is unit-tested.
+
 ## License
 
 MIT © [Pixel20coder](https://github.com/Pixel20coder)

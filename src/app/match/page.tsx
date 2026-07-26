@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { MIN_INPUT_LENGTH, type AnalysisResult } from "@/lib/types";
+import {
+  MIN_INPUT_LENGTH,
+  DEFAULT_TONE,
+  SUGGESTION_TONES,
+  type AnalysisResult,
+  type SuggestionTone,
+} from "@/lib/types";
 import { SAMPLE_RESUME, SAMPLE_JOB } from "@/lib/sample";
 import { clearSession, loadSession, saveSession } from "@/lib/storage";
 import {
@@ -32,6 +38,7 @@ export default function MatchPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [restored, setRestored] = useState(false);
   const [shared, setShared] = useState(false);
+  const [tone, setTone] = useState<SuggestionTone>(DEFAULT_TONE);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   // On mount, hydrate from (in priority order) a shared ?r= link, then the last
@@ -111,7 +118,7 @@ export default function MatchPage() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume, jobDescription }),
+        body: JSON.stringify({ resume, jobDescription, tone }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -187,7 +194,7 @@ export default function MatchPage() {
           placeholder="Paste the job description here…"
         />
 
-        <div className="sm:col-span-2">
+        <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
           <button
             type="submit"
             disabled={!canSubmit}
@@ -195,6 +202,22 @@ export default function MatchPage() {
           >
             {loading ? "Analyzing…" : "Analyze match"}
           </button>
+          <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+            Bullet tone
+            <select
+              value={tone}
+              onChange={(e) => setTone(e.target.value as SuggestionTone)}
+              className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm capitalize outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              {SUGGESTION_TONES.map((t) => (
+                <option key={t} value={t} className="capitalize">
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="sm:col-span-2 -mt-2">
           {!canSubmit && !loading && (
             <p className="mt-2 text-xs text-zinc-500">
               Add at least {MIN_INPUT_LENGTH} characters to each field.

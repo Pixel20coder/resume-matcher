@@ -1,6 +1,6 @@
 import { analyze } from "@/lib/analyze";
 import { LlmError } from "@/lib/llm";
-import { validateInput, type AnalyzeRequest } from "@/lib/types";
+import { parseTone, validateInput, type AnalyzeRequest } from "@/lib/types";
 
 export async function POST(request: Request): Promise<Response> {
   let body: Partial<AnalyzeRequest>;
@@ -17,7 +17,7 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const { resume, jobDescription } = validation.value;
-    const result = await analyze(resume, jobDescription);
+    const result = await analyze(resume, jobDescription, parseTone(body.tone));
     return Response.json(result);
   } catch (err) {
     if (err instanceof LlmError) {

@@ -12,10 +12,27 @@ export interface AnalysisResult {
   suggestions: string[];
 }
 
+/** Voice to use for the tailored bullet suggestions. */
+export type SuggestionTone = "impact" | "concise" | "friendly";
+
+/** The supported tones, in the order the UI presents them. */
+export const SUGGESTION_TONES: SuggestionTone[] = ["impact", "concise", "friendly"];
+
+/** Tone used when none is specified. */
+export const DEFAULT_TONE: SuggestionTone = "impact";
+
+/** Coerce an unknown value to a valid SuggestionTone, falling back to the default. */
+export function parseTone(value: unknown): SuggestionTone {
+  return SUGGESTION_TONES.includes(value as SuggestionTone)
+    ? (value as SuggestionTone)
+    : DEFAULT_TONE;
+}
+
 /** Request body accepted by the /api/analyze endpoint. */
 export interface AnalyzeRequest {
   resume: string;
   jobDescription: string;
+  tone?: SuggestionTone;
 }
 
 /** Minimum characters required for each input to be worth analyzing. */

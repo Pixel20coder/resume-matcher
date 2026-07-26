@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { validateInput, MIN_INPUT_LENGTH, MAX_INPUT_LENGTH } from "./types";
+import {
+  validateInput,
+  parseTone,
+  MIN_INPUT_LENGTH,
+  MAX_INPUT_LENGTH,
+  DEFAULT_TONE,
+} from "./types";
 
 const ok = "a".repeat(MIN_INPUT_LENGTH);
 
@@ -37,5 +43,19 @@ describe("validateInput", () => {
   it("rejects non-string inputs", () => {
     expect(validateInput(undefined, ok).ok).toBe(false);
     expect(validateInput(ok, 123).ok).toBe(false);
+  });
+});
+
+describe("parseTone", () => {
+  it("passes through a valid tone", () => {
+    expect(parseTone("concise")).toBe("concise");
+    expect(parseTone("friendly")).toBe("friendly");
+    expect(parseTone("impact")).toBe("impact");
+  });
+
+  it("falls back to the default for unknown or non-string values", () => {
+    expect(parseTone("loud")).toBe(DEFAULT_TONE);
+    expect(parseTone(undefined)).toBe(DEFAULT_TONE);
+    expect(parseTone(42)).toBe(DEFAULT_TONE);
   });
 });

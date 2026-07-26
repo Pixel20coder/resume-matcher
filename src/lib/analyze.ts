@@ -1,5 +1,5 @@
 import { chat } from "./llm";
-import type { AnalysisResult } from "./types";
+import { DEFAULT_TONE, type AnalysisResult, type SuggestionTone } from "./types";
 
 const SYSTEM_PROMPT = `You are an expert technical recruiter and resume coach.
 Compare a candidate's resume against a job description and respond with ONLY a
@@ -13,9 +13,26 @@ JSON object (no prose, no code fences) matching exactly this shape:
   "suggestions": ["<3-5 rewritten, achievement-focused resume bullets tailored to this job>"]
 }`;
 
-export function buildMessages(resume: string, jobDescription: string) {
+/** A one-line steer for the voice of the bullet suggestions. */
+export function toneInstruction(tone: SuggestionTone): string {
+  switch (tone) {
+    case "concise":
+      return "Write the suggestions as short, punchy bullets — one line each, no filler.";
+    case "friendly":
+      return "Write the suggestions in a warm, approachable first-person voice.";
+    case "impact":
+    default:
+      return "Write the suggestions as metrics-driven, achievement-focused bullets that quantify impact.";
+  }
+}
+
+export function buildMessages(
+  resume: string,
+  jobDescription: string,
+  tone: SuggestionTone = DEFAULT_TONE,
+) {
   return [
-    { role: "system" as const, content: SYSTEM_PROMPT },
+    { role: "system" as const, content: `${SYSTEM_PROMPT}\n\n${toneInstruction(tone)}` },
     {
       role: "user" as const,
       content: `RESUME:\n${resume}\n\nJOB DESCRIPTION:\n${jobDescription}`,
@@ -56,7 +73,11 @@ export function parseAnalysis(parsed: unknown): AnalysisResult {
 }
 
 /** Run the full analysis: prompt the model and return a validated result. */
-export async function analyze(resume: string, jobDescription: string): Promise<AnalysisResult> {
-  const reply = await chat(buildMessages(resume, jobDescription));
+export async function analyze(
+  resume: string,
+  jobDescription: string,
+  tone: SuggestionTone = DEFAULT_TONE,
+): Promise<AnalysisResult> {
+  const reply = await chat(buildMessages(resume, jobDescription, tone));
   return parseAnalysis(extractJson(reply));
 }

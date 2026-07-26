@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildMessages, extractJson, parseAnalysis } from "./analyze";
+import { buildMessages, extractJson, parseAnalysis, toneInstruction } from "./analyze";
 
 describe("extractJson", () => {
   it("parses a bare JSON object", () => {
@@ -66,6 +66,14 @@ describe("parseAnalysis", () => {
   });
 });
 
+describe("toneInstruction", () => {
+  it("returns a distinct steer for each tone", () => {
+    expect(toneInstruction("concise")).toMatch(/short|punchy/i);
+    expect(toneInstruction("friendly")).toMatch(/warm|approachable/i);
+    expect(toneInstruction("impact")).toMatch(/metrics|impact/i);
+  });
+});
+
 describe("buildMessages", () => {
   it("builds a system and user message containing both inputs", () => {
     const messages = buildMessages("my resume text", "the job description");
@@ -74,5 +82,15 @@ describe("buildMessages", () => {
     expect(messages[1].role).toBe("user");
     expect(messages[1].content).toContain("my resume text");
     expect(messages[1].content).toContain("the job description");
+  });
+
+  it("defaults to the impact tone in the system message", () => {
+    expect(buildMessages("r", "j")[0].content).toContain(toneInstruction("impact"));
+  });
+
+  it("embeds the chosen tone instruction in the system message", () => {
+    expect(buildMessages("r", "j", "friendly")[0].content).toContain(
+      toneInstruction("friendly"),
+    );
   });
 });
