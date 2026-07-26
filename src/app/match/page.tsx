@@ -12,6 +12,7 @@ import {
   pushHistory,
   type HistoryEntry,
 } from "@/lib/history";
+import { decodeResult, SHARE_PARAM } from "@/lib/share";
 import AnalysisResults from "./AnalysisResults";
 import ResultsSkeleton from "./ResultsSkeleton";
 
@@ -30,14 +31,24 @@ export default function MatchPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [restored, setRestored] = useState(false);
+  const [shared, setShared] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
-  // Restore the last analysis and past runs from a previous visit, once, on mount.
-  // localStorage is unavailable during SSR, so this must happen in a client effect.
+  // On mount, hydrate from (in priority order) a shared ?r= link, then the last
+  // saved session, plus past runs. localStorage and the URL are only available on
+  // the client, so this must happen in an effect.
   useEffect(() => {
+    const sharedResult = decodeResult(
+      new URLSearchParams(window.location.search).get(SHARE_PARAM),
+    );
     const saved = loadSession();
     /* eslint-disable react-hooks/set-state-in-effect -- one-time external-store hydration */
     setHistory(loadHistory());
+    if (sharedResult) {
+      setResult(sharedResult);
+      setShared(true);
+      return;
+    }
     if (!saved) return;
     setResume(saved.resume);
     setJobDescription(saved.jobDescription);
@@ -57,6 +68,7 @@ export default function MatchPage() {
     setError(null);
     setResult(null);
     setRestored(false);
+    setShared(false);
   }
 
   function clearAll() {
@@ -65,6 +77,7 @@ export default function MatchPage() {
     setError(null);
     setResult(null);
     setRestored(false);
+    setShared(false);
     clearSession();
   }
 
@@ -74,6 +87,7 @@ export default function MatchPage() {
     setResult(entry.result);
     setError(null);
     setRestored(true);
+    setShared(false);
     saveSession({
       resume: entry.resume,
       jobDescription: entry.jobDescription,
@@ -106,6 +120,7 @@ export default function MatchPage() {
       const analysis = (await res.json()) as AnalysisResult;
       setResult(analysis);
       setRestored(false);
+      setShared(false);
       saveSession({ resume, jobDescription, result: analysis });
       setHistory(
         pushHistory({
@@ -194,7 +209,14 @@ export default function MatchPage() {
         </p>
       )}
 
-      {!loading && result && restored && (
+      {!loading && result && shared && (
+        <p className="mt-6 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950 dark:text-indigo-300">
+          You&apos;re viewing a shared analysis. Paste your own resume above and run
+          it to get your match.
+        </p>
+      )}
+
+      {!loading && result && restored && !shared && (
         <p className="mt-6 text-xs text-zinc-500">
           Showing your last analysis from this browser. Edit and re-run to refresh it.
         </p>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import { buildReport, reportFilename } from "@/lib/report";
+import { buildShareUrl } from "@/lib/share";
 
 export default function AnalysisResults({ result }: { result: AnalysisResult }) {
   return (
@@ -15,7 +16,8 @@ export default function AnalysisResults({ result }: { result: AnalysisResult }) 
             {result.summary || "Here's how your resume lines up with the role."}
           </p>
         </div>
-        <div className="sm:ml-auto">
+        <div className="flex gap-2 sm:ml-auto">
+          <ShareLink result={result} />
           <DownloadReport result={result} />
         </div>
       </div>
@@ -46,6 +48,34 @@ export default function AnalysisResults({ result }: { result: AnalysisResult }) 
         </div>
       )}
     </section>
+  );
+}
+
+function ShareLink({ result }: { result: AnalysisResult }) {
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
+
+  async function share() {
+    const base = `${window.location.origin}${window.location.pathname}`;
+    const url = buildShareUrl(base, result);
+    try {
+      await navigator.clipboard.writeText(url);
+      setState("copied");
+    } catch {
+      setState("failed");
+    }
+    setTimeout(() => setState("idle"), 1800);
+  }
+
+  const label =
+    state === "copied" ? "Link copied" : state === "failed" ? "Copy failed" : "Copy share link";
+
+  return (
+    <button
+      onClick={share}
+      className="shrink-0 rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+    >
+      {label}
+    </button>
   );
 }
 

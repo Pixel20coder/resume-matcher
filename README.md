@@ -86,6 +86,16 @@ history** wipes the list. The list logic — dedup, cap, labelling, and lenient
 parsing that skips malformed entries — lives in a pure `src/lib/history.ts`
 module with its own unit tests.
 
+## Shareable result links
+
+**Copy share link** in the results view puts a URL on your clipboard that encodes
+the whole result in a `?r=` query param. Open that link and the analysis loads
+read-only with a "viewing a shared analysis" banner — handy for sending a match
+to a mentor. Encoding is UTF-8-safe base64url, and decoding runs the payload back
+through `parseAnalysis`, so a truncated or tampered link simply resolves to no
+shared result. The encode/decode core lives in a pure `src/lib/share.ts` module
+with its own unit tests — no server round-trip, nothing stored.
+
 ## License
 
 MIT © [Pixel20coder](https://github.com/Pixel20coder)
