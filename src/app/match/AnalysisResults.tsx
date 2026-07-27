@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
-import { buildReport, reportFilename } from "@/lib/report";
+import { buildReport, reportFilename, suggestionsToText } from "@/lib/report";
 import { buildShareUrl } from "@/lib/share";
 
 export default function AnalysisResults({ result }: { result: AnalysisResult }) {
@@ -39,7 +39,10 @@ export default function AnalysisResults({ result }: { result: AnalysisResult }) 
 
       {result.suggestions.length > 0 && (
         <div>
-          <h3 className="mb-3 text-lg font-semibold">Tailored bullet suggestions</h3>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold">Tailored bullet suggestions</h3>
+            <CopyAll suggestions={result.suggestions} />
+          </div>
           <ul className="space-y-3">
             {result.suggestions.map((text, i) => (
               <Suggestion key={i} text={text} />
@@ -48,6 +51,29 @@ export default function AnalysisResults({ result }: { result: AnalysisResult }) 
         </div>
       )}
     </section>
+  );
+}
+
+function CopyAll({ suggestions }: { suggestions: string[] }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(suggestionsToText(suggestions));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable — ignore */
+    }
+  }
+
+  return (
+    <button
+      onClick={copy}
+      className="shrink-0 rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+    >
+      {copied ? "Copied" : "Copy all"}
+    </button>
   );
 }
 

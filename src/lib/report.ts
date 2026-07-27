@@ -47,3 +47,15 @@ export function buildReport(result: AnalysisResult): string {
 export function reportFilename(score: number): string {
   return `resume-match-report-${score}.md`;
 }
+
+/**
+ * Join the tailored bullet suggestions into a plain-text block ready for the
+ * clipboard — one dash-prefixed bullet per line, blanks dropped. Pure.
+ */
+export function suggestionsToText(suggestions: string[]): string {
+  return suggestions
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+    .map((s) => `- ${s}`)
+    .join("\n");
+}

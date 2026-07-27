@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildReport, reportFilename, scoreVerdict } from "./report";
+import { buildReport, reportFilename, scoreVerdict, suggestionsToText } from "./report";
 import type { AnalysisResult } from "./types";
 
 const base: AnalysisResult = {
@@ -61,5 +61,21 @@ describe("buildReport", () => {
 describe("reportFilename", () => {
   it("embeds the score", () => {
     expect(reportFilename(82)).toBe("resume-match-report-82.md");
+  });
+});
+
+describe("suggestionsToText", () => {
+  it("renders one dash-prefixed bullet per line", () => {
+    expect(suggestionsToText(["First bullet", "Second bullet"])).toBe(
+      "- First bullet\n- Second bullet",
+    );
+  });
+
+  it("trims whitespace and drops blank entries", () => {
+    expect(suggestionsToText(["  Kept  ", "   ", ""])).toBe("- Kept");
+  });
+
+  it("returns an empty string for no suggestions", () => {
+    expect(suggestionsToText([])).toBe("");
   });
 });

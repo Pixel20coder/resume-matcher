@@ -105,6 +105,14 @@ punchy), or **friendly** (warm, first-person). The choice rides along in the
 missing values fall back to `impact` server-side via `parseTone`. The tone→prompt
 mapping lives in `toneInstruction()` and is unit-tested.
 
+## Copy all suggestions
+
+A **Copy all** button in the suggestions header copies every tailored bullet to
+the clipboard as a dash-prefixed list, so you can paste the whole set into your
+resume in one go (individual **Copy** buttons remain per bullet). Formatting is a
+pure `suggestionsToText()` helper — it trims each line and drops blanks — and is
+unit-tested on its own.
+
 ## License
 
 MIT © [Pixel20coder](https://github.com/Pixel20coder)
