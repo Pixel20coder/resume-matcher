@@ -1,5 +1,6 @@
 import { analyze } from "@/lib/analyze";
 import { LlmError } from "@/lib/llm";
+import { normalizeText } from "@/lib/normalize";
 import { parseTone, validateInput, type AnalyzeRequest } from "@/lib/types";
 
 export async function POST(request: Request): Promise<Response> {
@@ -17,7 +18,11 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const { resume, jobDescription } = validation.value;
-    const result = await analyze(resume, jobDescription, parseTone(body.tone));
+    const result = await analyze(
+      normalizeText(resume),
+      normalizeText(jobDescription),
+      parseTone(body.tone),
+    );
     return Response.json(result);
   } catch (err) {
     if (err instanceof LlmError) {

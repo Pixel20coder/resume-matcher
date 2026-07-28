@@ -49,6 +49,16 @@ npm test
 | `NVIDIA_MODEL`        | Optional. Defaults to `mistralai/mistral-7b-instruct-v0.3`. |
 | `NEXT_PUBLIC_SITE_URL`| Optional. Absolute base URL used for Open Graph links.  |
 
+## Input cleanup
+
+Resumes and job descriptions pasted from PDFs, Word, or web pages arrive full of
+noise — smart bullet glyphs, non-breaking and zero-width spaces, stray control
+characters, and ragged blank lines. Before anything is sent to the model, both
+inputs pass through a pure `normalizeText()` (`src/lib/normalize.ts`) that unifies
+line endings, strips invisible junk, rewrites bullet glyphs to `- `, and collapses
+excess whitespace. It is idempotent and unit-tested against real invisible
+characters, and it means cleaner prompts and fewer wasted tokens.
+
 ## Reliability
 
 Model calls are hardened against the flakiness of a free hosted endpoint:
