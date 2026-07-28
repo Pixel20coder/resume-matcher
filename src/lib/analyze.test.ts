@@ -21,6 +21,7 @@ describe("parseAnalysis", () => {
     const result = parseAnalysis({
       score: 83,
       summary: "Strong fit.",
+      categories: [{ name: "Skills", score: 90 }],
       matchedSkills: ["React", "TypeScript"],
       missingSkills: ["Go"],
       suggestions: ["Led a migration to TypeScript."],
@@ -28,10 +29,32 @@ describe("parseAnalysis", () => {
     expect(result).toEqual({
       score: 83,
       summary: "Strong fit.",
+      categories: [{ name: "Skills", score: 90 }],
       matchedSkills: ["React", "TypeScript"],
       missingSkills: ["Go"],
       suggestions: ["Led a migration to TypeScript."],
     });
+  });
+
+  it("defaults categories to an empty array when absent or not an array", () => {
+    expect(parseAnalysis({ score: 50 }).categories).toEqual([]);
+    expect(parseAnalysis({ categories: "nope" }).categories).toEqual([]);
+  });
+
+  it("clamps category scores and drops unnamed or malformed entries", () => {
+    const result = parseAnalysis({
+      categories: [
+        { name: "Skills", score: 120 },
+        { name: "  ", score: 50 }, // blank name → dropped
+        { score: 40 }, // no name → dropped
+        { name: "Experience", score: "72" }, // coerced
+        "not an object", // → dropped
+      ],
+    });
+    expect(result.categories).toEqual([
+      { name: "Skills", score: 100 },
+      { name: "Experience", score: 72 },
+    ]);
   });
 
   it("clamps the score to 0–100 and rounds it", () => {

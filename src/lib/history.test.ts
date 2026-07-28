@@ -12,6 +12,7 @@ import type { AnalysisResult } from "./types";
 const result = (score: number): AnalysisResult => ({
   score,
   summary: "",
+  categories: [],
   matchedSkills: [],
   missingSkills: [],
   suggestions: [],

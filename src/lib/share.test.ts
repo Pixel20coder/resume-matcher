@@ -5,6 +5,7 @@ import type { AnalysisResult } from "./types";
 const result: AnalysisResult = {
   score: 88,
   summary: "Great fit — café ☕ résumé keywords match.",
+  categories: [{ name: "Experience", score: 90 }],
   matchedSkills: ["TypeScript", "Node.js"],
   missingSkills: ["Rust"],
   suggestions: ["Built a service handling 1M req/day."],

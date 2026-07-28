@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { AnalysisResult } from "@/lib/types";
+import type { AnalysisResult, CategoryScore } from "@/lib/types";
 import { buildReport, reportFilename, suggestionsToText } from "@/lib/report";
 import { buildShareUrl } from "@/lib/share";
 
@@ -21,6 +21,8 @@ export default function AnalysisResults({ result }: { result: AnalysisResult }) 
           <DownloadReport result={result} />
         </div>
       </div>
+
+      {result.categories.length > 0 && <Breakdown categories={result.categories} />}
 
       <div className="grid gap-6 sm:grid-cols-2">
         <ChipList
@@ -131,6 +133,37 @@ function DownloadReport({ result }: { result: AnalysisResult }) {
     >
       {saved ? "Saved" : "Download report"}
     </button>
+  );
+}
+
+function Breakdown({ categories }: { categories: CategoryScore[] }) {
+  return (
+    <div className="rounded-xl border border-zinc-200 p-6 dark:border-zinc-800">
+      <h3 className="mb-4 text-sm font-semibold text-zinc-500 uppercase tracking-wide">
+        Score breakdown
+      </h3>
+      <ul className="space-y-3">
+        {categories.map((category) => {
+          const width = Math.max(0, Math.min(100, category.score));
+          const bar =
+            width >= 75 ? "bg-green-500" : width >= 50 ? "bg-amber-500" : "bg-red-500";
+          return (
+            <li key={category.name}>
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span className="font-medium">{category.name}</span>
+                <span className="text-zinc-500 tabular-nums">{category.score}</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                <div
+                  className={`h-full rounded-full ${bar} transition-[width] duration-700`}
+                  style={{ width: `${width}%` }}
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 

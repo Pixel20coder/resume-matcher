@@ -1,5 +1,10 @@
 import { chat } from "./llm";
-import { DEFAULT_TONE, type AnalysisResult, type SuggestionTone } from "./types";
+import {
+  DEFAULT_TONE,
+  type AnalysisResult,
+  type CategoryScore,
+  type SuggestionTone,
+} from "./types";
 
 const SYSTEM_PROMPT = `You are an expert technical recruiter and resume coach.
 Compare a candidate's resume against a job description and respond with ONLY a
@@ -8,6 +13,12 @@ JSON object (no prose, no code fences) matching exactly this shape:
 {
   "score": <integer 0-100, how well the resume fits the job>,
   "summary": "<one sentence overall assessment>",
+  "categories": [
+    {"name": "Skills", "score": <0-100>},
+    {"name": "Experience", "score": <0-100>},
+    {"name": "Keywords", "score": <0-100>},
+    {"name": "Education", "score": <0-100>}
+  ],
   "matchedSkills": ["<skills/keywords the job wants that the resume already shows>"],
   "missingSkills": ["<skills/keywords the job wants that the resume lacks>"],
   "suggestions": ["<3-5 rewritten, achievement-focused resume bullets tailored to this job>"]
@@ -54,18 +65,34 @@ export function extractJson(raw: string): unknown {
 const asStringArray = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 
+/** Coerce any value to an integer score in [0, 100], defaulting to 0. */
+const clampScore = (value: unknown): number => {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 0;
+};
+
+/** Normalize the category breakdown, dropping unnamed or malformed entries. */
+const asCategories = (value: unknown): CategoryScore[] => {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry): CategoryScore[] => {
+    if (typeof entry !== "object" || entry === null) return [];
+    const { name, score } = entry as Record<string, unknown>;
+    if (typeof name !== "string" || name.trim() === "") return [];
+    return [{ name: name.trim(), score: clampScore(score) }];
+  });
+};
+
 /** Validate and normalize a parsed object into an AnalysisResult. */
 export function parseAnalysis(parsed: unknown): AnalysisResult {
   if (typeof parsed !== "object" || parsed === null) {
     throw new Error("Model response was not an object.");
   }
   const obj = parsed as Record<string, unknown>;
-  const rawScore = typeof obj.score === "number" ? obj.score : Number(obj.score);
-  const score = Number.isFinite(rawScore) ? Math.max(0, Math.min(100, Math.round(rawScore))) : 0;
 
   return {
-    score,
+    score: clampScore(obj.score),
     summary: typeof obj.summary === "string" ? obj.summary : "",
+    categories: asCategories(obj.categories),
     matchedSkills: asStringArray(obj.matchedSkills),
     missingSkills: asStringArray(obj.missingSkills),
     suggestions: asStringArray(obj.suggestions),

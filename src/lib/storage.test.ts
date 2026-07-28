@@ -5,6 +5,7 @@ import type { AnalysisResult } from "./types";
 const result: AnalysisResult = {
   score: 77,
   summary: "Good overlap.",
+  categories: [{ name: "Skills", score: 80 }],
   matchedSkills: ["TypeScript"],
   missingSkills: ["Go"],
   suggestions: ["Shipped a Next.js app used by 1k users."],

@@ -5,6 +5,7 @@ import type { AnalysisResult } from "./types";
 const base: AnalysisResult = {
   score: 82,
   summary: "Solid overlap with the core stack.",
+  categories: [],
   matchedSkills: ["TypeScript", "React"],
   missingSkills: ["Kubernetes"],
   suggestions: ["Led migration to React 19, cutting bundle size 30%."],
@@ -38,10 +39,21 @@ describe("buildReport", () => {
     expect(md).toContain("- Led migration to React 19, cutting bundle size 30%.");
   });
 
+  it("includes a score breakdown section when categories are present", () => {
+    const md = buildReport({ ...base, categories: [{ name: "Skills", score: 90 }] });
+    expect(md).toContain("## Score breakdown");
+    expect(md).toContain("- Skills: 90/100");
+  });
+
+  it("omits the breakdown section when there are no categories", () => {
+    expect(buildReport(base)).not.toContain("## Score breakdown");
+  });
+
   it("shows placeholders when lists are empty", () => {
     const md = buildReport({
       score: 30,
       summary: "",
+      categories: [],
       matchedSkills: [],
       missingSkills: [],
       suggestions: [],

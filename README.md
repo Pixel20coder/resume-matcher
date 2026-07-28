@@ -49,6 +49,15 @@ npm test
 | `NVIDIA_MODEL`        | Optional. Defaults to `mistralai/mistral-7b-instruct-v0.3`. |
 | `NEXT_PUBLIC_SITE_URL`| Optional. Absolute base URL used for Open Graph links.  |
 
+## Score breakdown
+
+Beyond the single overall number, the analysis returns a per-category breakdown
+— Skills, Experience, Keywords, Education, each 0–100 — rendered as labelled bars
+under the score ring and included in the downloaded report. Parsing is defensive:
+`parseAnalysis` clamps each category score to 0–100 and drops unnamed or malformed
+entries, and the field defaults to an empty array, so older saved or shared results
+without a breakdown still load fine.
+
 ## Input cleanup
 
 Resumes and job descriptions pasted from PDFs, Word, or web pages arrive full of

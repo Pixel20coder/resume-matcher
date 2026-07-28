@@ -1,9 +1,19 @@
+/** A named sub-score contributing to the overall match, 0–100. */
+export interface CategoryScore {
+  /** Short category name, e.g. "Skills" or "Experience". */
+  name: string;
+  /** How well the resume covers this category, 0–100. */
+  score: number;
+}
+
 /** Shape of the analysis returned by the /api/analyze endpoint. */
 export interface AnalysisResult {
   /** Overall fit of the resume to the job, 0–100. */
   score: number;
   /** One-line summary of the match. */
   summary: string;
+  /** Per-category breakdown behind the overall score (may be empty). */
+  categories: CategoryScore[];
   /** Skills/keywords the job asks for that the resume already covers. */
   matchedSkills: string[];
   /** Skills/keywords the job asks for that the resume is missing. */
