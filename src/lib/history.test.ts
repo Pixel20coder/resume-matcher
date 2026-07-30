@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   addEntry,
+  removeEntry,
   entryLabel,
   parseHistory,
   serializeHistory,
@@ -47,6 +48,18 @@ describe("addEntry", () => {
     }
     expect(list).toHaveLength(MAX_HISTORY);
     expect(list[0].id).toBe(`id-${MAX_HISTORY + 2}`); // newest kept
+  });
+});
+
+describe("removeEntry", () => {
+  it("removes only the entry with the matching id, keeping order", () => {
+    const list = [entry("a", "A"), entry("b", "B"), entry("c", "C")];
+    expect(removeEntry(list, "b").map((e) => e.id)).toEqual(["a", "c"]);
+  });
+
+  it("returns an equal list when the id is absent", () => {
+    const list = [entry("a", "A")];
+    expect(removeEntry(list, "zzz").map((e) => e.id)).toEqual(["a"]);
   });
 });
 

@@ -16,6 +16,7 @@ import {
   entryLabel,
   loadHistory,
   pushHistory,
+  removeFromHistory,
   type HistoryEntry,
 } from "@/lib/history";
 import { decodeResult, SHARE_PARAM } from "@/lib/share";
@@ -122,6 +123,10 @@ export default function MatchPage() {
   function wipeHistory() {
     clearHistory();
     setHistory([]);
+  }
+
+  function removeHistoryEntry(id: string) {
+    setHistory(removeFromHistory(id));
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
@@ -314,13 +319,22 @@ export default function MatchPage() {
           </div>
           <ul className="space-y-2">
             {history.map((entry) => (
-              <li key={entry.id}>
+              <li key={entry.id} className="flex items-stretch gap-2">
                 <button
                   type="button"
                   onClick={() => restoreEntry(entry)}
-                  className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 text-left text-sm transition hover:border-indigo-400 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:border-indigo-600 dark:hover:bg-zinc-900"
+                  className="flex-1 rounded-lg border border-zinc-200 px-4 py-2.5 text-left text-sm transition hover:border-indigo-400 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:border-indigo-600 dark:hover:bg-zinc-900"
                 >
                   {entryLabel(entry)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeHistoryEntry(entry.id)}
+                  aria-label={`Remove ${entryLabel(entry)}`}
+                  title="Remove"
+                  className="shrink-0 rounded-lg border border-zinc-200 px-3 text-sm text-zinc-400 transition hover:border-red-300 hover:text-red-600 dark:border-zinc-800 dark:hover:border-red-900 dark:hover:text-red-400"
+                >
+                  ✕
                 </button>
               </li>
             ))}
