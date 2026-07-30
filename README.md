@@ -49,6 +49,13 @@ npm test
 | `NVIDIA_MODEL`        | Optional. Defaults to `mistralai/mistral-7b-instruct-v0.3`. |
 | `NEXT_PUBLIC_SITE_URL`| Optional. Absolute base URL used for Open Graph links.  |
 
+## Keyboard submit
+
+Press **⌘/Ctrl + Enter** from anywhere in the form — including inside the
+textareas — to run the analysis without reaching for the mouse. The shortcut is
+gated on the same validity check as the button, and the chord match is a pure,
+unit-tested `isSubmitShortcut()` helper.
+
 ## Live keyword coverage
 
 Before you spend an analysis, a panel shows the top keywords from the job

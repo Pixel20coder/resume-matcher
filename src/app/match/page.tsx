@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MIN_INPUT_LENGTH,
   DEFAULT_TONE,
@@ -19,6 +19,7 @@ import {
   type HistoryEntry,
 } from "@/lib/history";
 import { decodeResult, SHARE_PARAM } from "@/lib/share";
+import { isSubmitShortcut } from "@/lib/shortcut";
 import {
   coverageScore,
   extractKeywords,
@@ -46,6 +47,7 @@ export default function MatchPage() {
   const [shared, setShared] = useState(false);
   const [tone, setTone] = useState<SuggestionTone>(DEFAULT_TONE);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const formRef = useRef<HTMLFormElement>(null);
 
   // On mount, hydrate from (in priority order) a shared ?r= link, then the last
   // saved session, plus past runs. localStorage and the URL are only available on
@@ -122,6 +124,14 @@ export default function MatchPage() {
     setHistory([]);
   }
 
+  function handleKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
+    // Cmd/Ctrl+Enter submits from anywhere in the form, including the textareas.
+    if (isSubmitShortcut(event) && canSubmit) {
+      event.preventDefault();
+      formRef.current?.requestSubmit();
+    }
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!canSubmit) return;
@@ -193,7 +203,12 @@ export default function MatchPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid gap-6 sm:grid-cols-2">
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        onKeyDown={handleKeyDown}
+        className="grid gap-6 sm:grid-cols-2"
+      >
         <Field
           label="Your resume"
           value={resume}
@@ -233,10 +248,22 @@ export default function MatchPage() {
           </label>
         </div>
         <div className="sm:col-span-2 -mt-2">
-          {!canSubmit && !loading && (
+          {!canSubmit && !loading ? (
             <p className="mt-2 text-xs text-zinc-500">
               Add at least {MIN_INPUT_LENGTH} characters to each field.
             </p>
+          ) : (
+            !loading && (
+              <p className="mt-2 text-xs text-zinc-400">
+                Tip: press{" "}
+                <kbd className="rounded border border-zinc-300 px-1 dark:border-zinc-700">⌘</kbd>
+                /
+                <kbd className="rounded border border-zinc-300 px-1 dark:border-zinc-700">Ctrl</kbd>
+                {" + "}
+                <kbd className="rounded border border-zinc-300 px-1 dark:border-zinc-700">Enter</kbd>{" "}
+                to analyze.
+              </p>
+            )
           )}
         </div>
       </form>
