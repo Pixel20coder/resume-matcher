@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MIN_INPUT_LENGTH,
   DEFAULT_TONE,
@@ -19,6 +19,12 @@ import {
   type HistoryEntry,
 } from "@/lib/history";
 import { decodeResult, SHARE_PARAM } from "@/lib/share";
+import {
+  coverageScore,
+  extractKeywords,
+  keywordCoverage,
+  type Keyword,
+} from "@/lib/keywords";
 import AnalysisResults from "./AnalysisResults";
 import ResultsSkeleton from "./ResultsSkeleton";
 
@@ -68,6 +74,15 @@ export default function MatchPage() {
   const jobReady = jobDescription.trim().length >= MIN_INPUT_LENGTH;
   const canSubmit = resumeReady && jobReady && !loading;
   const hasInput = resume.length > 0 || jobDescription.length > 0;
+
+  // Instant, client-side keyword coverage — no LLM call needed. Recomputed only
+  // when the inputs change, and only once both have enough text to be useful.
+  const coverage = useMemo(() => {
+    if (!resumeReady || !jobReady) return null;
+    const keywords = extractKeywords(jobDescription);
+    const { covered, missing } = keywordCoverage(resume, keywords);
+    return { covered, missing, score: coverageScore(covered.length, keywords.length) };
+  }, [resume, jobDescription, resumeReady, jobReady]);
 
   function loadSample() {
     setResume(SAMPLE_RESUME);
@@ -226,6 +241,14 @@ export default function MatchPage() {
         </div>
       </form>
 
+      {coverage && (coverage.covered.length > 0 || coverage.missing.length > 0) && (
+        <KeywordCoverage
+          covered={coverage.covered}
+          missing={coverage.missing}
+          score={coverage.score}
+        />
+      )}
+
       {error && (
         <p className="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
           {error}
@@ -278,6 +301,51 @@ export default function MatchPage() {
         </section>
       )}
     </main>
+  );
+}
+
+function KeywordCoverage({
+  covered,
+  missing,
+  score,
+}: {
+  covered: Keyword[];
+  missing: Keyword[];
+  score: number;
+}) {
+  return (
+    <section className="mt-8 rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">
+          Job keyword coverage
+        </h2>
+        <span className="text-sm font-medium tabular-nums">
+          {score}% <span className="text-zinc-400">({covered.length}/{covered.length + missing.length})</span>
+        </span>
+      </div>
+      <p className="mb-3 text-xs text-zinc-500">
+        A quick, instant check of which top job keywords already appear in your resume — run
+        the full analysis for scored, tailored feedback.
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {covered.map((k) => (
+          <span
+            key={k.term}
+            className="rounded-full border border-green-300 bg-green-50 px-2.5 py-0.5 text-xs text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
+          >
+            {k.term}
+          </span>
+        ))}
+        {missing.map((k) => (
+          <span
+            key={k.term}
+            className="rounded-full border border-zinc-300 px-2.5 py-0.5 text-xs text-zinc-500 line-through dark:border-zinc-700"
+          >
+            {k.term}
+          </span>
+        ))}
+      </div>
+    </section>
   );
 }
 

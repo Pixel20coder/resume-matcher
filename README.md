@@ -49,6 +49,16 @@ npm test
 | `NVIDIA_MODEL`        | Optional. Defaults to `mistralai/mistral-7b-instruct-v0.3`. |
 | `NEXT_PUBLIC_SITE_URL`| Optional. Absolute base URL used for Open Graph links.  |
 
+## Live keyword coverage
+
+Before you spend an analysis, a panel shows the top keywords from the job
+description and which ones already appear in your resume — covered terms in green,
+missing terms struck through, with an at-a-glance coverage percentage. It updates
+as you type and runs entirely client-side (no model call). The extraction,
+tokenizing, coverage split, and percentage all live in a pure `src/lib/keywords.ts`
+module with its own unit tests; tech tokens like `go`, `c++`, and `c#` survive the
+stopword filter.
+
 ## Score breakdown
 
 Beyond the single overall number, the analysis returns a per-category breakdown
