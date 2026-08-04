@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { buildMessages, extractJson, parseAnalysis, toneInstruction } from "./analyze";
+import {
+  buildMessages,
+  extractJson,
+  normalizeSkills,
+  parseAnalysis,
+  subtractSkills,
+  toneInstruction,
+} from "./analyze";
 
 describe("extractJson", () => {
   it("parses a bare JSON object", () => {
@@ -83,9 +90,41 @@ describe("parseAnalysis", () => {
     expect(result.suggestions).toEqual(["Good bullet"]);
   });
 
+  it("de-duplicates skills and removes cross-list overlap (matched wins)", () => {
+    const result = parseAnalysis({
+      matchedSkills: ["React", "react", " TypeScript "],
+      missingSkills: ["TypeScript", "Go", "go", ""],
+    });
+    expect(result.matchedSkills).toEqual(["React", "TypeScript"]);
+    expect(result.missingSkills).toEqual(["Go"]);
+  });
+
   it("rejects non-object input", () => {
     expect(() => parseAnalysis(null)).toThrow(/not an object/);
     expect(() => parseAnalysis("nope")).toThrow(/not an object/);
+  });
+});
+
+describe("normalizeSkills", () => {
+  it("trims, drops empties, and de-dupes case-insensitively keeping first casing", () => {
+    expect(normalizeSkills([" React ", "react", "REACT", "Node", ""])).toEqual([
+      "React",
+      "Node",
+    ]);
+  });
+
+  it("returns [] for non-array input", () => {
+    expect(normalizeSkills("nope")).toEqual([]);
+    expect(normalizeSkills(undefined)).toEqual([]);
+  });
+});
+
+describe("subtractSkills", () => {
+  it("removes case-insensitive matches, preserving order", () => {
+    expect(subtractSkills(["Go", "Rust", "python"], ["PYTHON", "java"])).toEqual([
+      "Go",
+      "Rust",
+    ]);
   });
 });
 

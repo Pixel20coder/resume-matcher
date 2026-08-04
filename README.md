@@ -85,6 +85,14 @@ line endings, strips invisible junk, rewrites bullet glyphs to `- `, and collaps
 excess whitespace. It is idempotent and unit-tested against real invisible
 characters, and it means cleaner prompts and fewer wasted tokens.
 
+## Skill de-duplication
+
+Models often return the same skill more than once (`React` / `react` / ` React `)
+or list a skill as both matched and missing. `parseAnalysis` now trims and
+case-insensitively de-duplicates each list (keeping the first-seen casing) and
+drops any "missing" skill that also shows up as matched — matched wins. The
+`normalizeSkills` and `subtractSkills` helpers are pure and unit-tested.
+
 ## Reliability
 
 Model calls are hardened against the flakiness of a free hosted endpoint:
