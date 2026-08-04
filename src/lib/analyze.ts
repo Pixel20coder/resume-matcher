@@ -65,6 +65,29 @@ export function extractJson(raw: string): unknown {
 const asStringArray = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 
+/**
+ * Trim, drop empties, and case-insensitively de-duplicate a skill list,
+ * keeping the first-seen casing. Models often repeat "React" / "react".
+ */
+export const normalizeSkills = (value: unknown): string[] => {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of asStringArray(value)) {
+    const trimmed = raw.trim();
+    const key = trimmed.toLowerCase();
+    if (trimmed === "" || seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+  }
+  return out;
+};
+
+/** Remove from `list` any skill that already appears in `exclude` (case-insensitive). */
+export const subtractSkills = (list: string[], exclude: string[]): string[] => {
+  const blocked = new Set(exclude.map((s) => s.toLowerCase()));
+  return list.filter((s) => !blocked.has(s.toLowerCase()));
+};
+
 /** Coerce any value to an integer score in [0, 100], defaulting to 0. */
 const clampScore = (value: unknown): number => {
   const n = typeof value === "number" ? value : Number(value);
@@ -89,12 +112,16 @@ export function parseAnalysis(parsed: unknown): AnalysisResult {
   }
   const obj = parsed as Record<string, unknown>;
 
+  const matchedSkills = normalizeSkills(obj.matchedSkills);
+  // A skill can't be both present and missing — matched wins.
+  const missingSkills = subtractSkills(normalizeSkills(obj.missingSkills), matchedSkills);
+
   return {
     score: clampScore(obj.score),
     summary: typeof obj.summary === "string" ? obj.summary : "",
     categories: asCategories(obj.categories),
-    matchedSkills: asStringArray(obj.matchedSkills),
-    missingSkills: asStringArray(obj.missingSkills),
+    matchedSkills,
+    missingSkills,
     suggestions: asStringArray(obj.suggestions),
   };
 }
