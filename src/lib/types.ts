@@ -51,6 +51,35 @@ export const MIN_INPUT_LENGTH = 50;
 /** Maximum characters accepted per input, to bound token cost and abuse. */
 export const MAX_INPUT_LENGTH = 20_000;
 
+/** How close to MAX_INPUT_LENGTH counts as "near the limit". */
+export const NEAR_LIMIT_MARGIN = 500;
+
+/** Coarse status of a single input's length, for live UI feedback. */
+export type InputLengthState = "empty" | "short" | "ok" | "near-limit" | "over";
+
+/** A description of how one input's length compares to the accepted range. */
+export interface InputLengthInfo {
+  /** Trimmed character count. */
+  count: number;
+  /** Which band the count falls into. */
+  state: InputLengthState;
+  /** Characters left before MAX_INPUT_LENGTH; negative once over. */
+  remaining: number;
+}
+
+/** Classify an input's trimmed length against the min/max/near-limit bands. Pure. */
+export function describeInputLength(value: string): InputLengthInfo {
+  const count = value.trim().length;
+  const remaining = MAX_INPUT_LENGTH - count;
+  let state: InputLengthState;
+  if (count === 0) state = "empty";
+  else if (count < MIN_INPUT_LENGTH) state = "short";
+  else if (count > MAX_INPUT_LENGTH) state = "over";
+  else if (remaining <= NEAR_LIMIT_MARGIN) state = "near-limit";
+  else state = "ok";
+  return { count, state, remaining };
+}
+
 /** A validated pair of trimmed inputs ready to send to the model. */
 export interface ValidatedInput {
   resume: string;

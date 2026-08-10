@@ -85,6 +85,14 @@ line endings, strips invisible junk, rewrites bullet glyphs to `- `, and collaps
 excess whitespace. It is idempotent and unit-tested against real invisible
 characters, and it means cleaner prompts and fewer wasted tokens.
 
+## Live length feedback
+
+Each input shows its trimmed character count as you type, coloured by state:
+grey while empty, green once it clears the 50-character minimum, amber within 500
+of the 20,000 cap (with a "left" countdown), and red once over (with an "over
+limit" amount and a red border). The banding is a pure `describeInputLength()`
+helper next to the limit constants, unit-tested across every state.
+
 ## Skill de-duplication
 
 Models often return the same skill more than once (`React` / `react` / ` React `)
