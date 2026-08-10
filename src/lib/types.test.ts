@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   validateInput,
   parseTone,
+  describeInputLength,
   MIN_INPUT_LENGTH,
   MAX_INPUT_LENGTH,
+  NEAR_LIMIT_MARGIN,
   DEFAULT_TONE,
 } from "./types";
 
@@ -57,5 +59,34 @@ describe("parseTone", () => {
     expect(parseTone("loud")).toBe(DEFAULT_TONE);
     expect(parseTone(undefined)).toBe(DEFAULT_TONE);
     expect(parseTone(42)).toBe(DEFAULT_TONE);
+  });
+});
+
+describe("describeInputLength", () => {
+  it("reports empty and short states", () => {
+    expect(describeInputLength("   ").state).toBe("empty");
+    expect(describeInputLength("a".repeat(MIN_INPUT_LENGTH - 1)).state).toBe("short");
+  });
+
+  it("reports ok well within the range", () => {
+    const info = describeInputLength("a".repeat(MIN_INPUT_LENGTH + 100));
+    expect(info.state).toBe("ok");
+    expect(info.count).toBe(MIN_INPUT_LENGTH + 100);
+  });
+
+  it("flags near-limit within the margin", () => {
+    const info = describeInputLength("a".repeat(MAX_INPUT_LENGTH - NEAR_LIMIT_MARGIN));
+    expect(info.state).toBe("near-limit");
+    expect(info.remaining).toBe(NEAR_LIMIT_MARGIN);
+  });
+
+  it("flags over the maximum with a negative remaining", () => {
+    const info = describeInputLength("a".repeat(MAX_INPUT_LENGTH + 10));
+    expect(info.state).toBe("over");
+    expect(info.remaining).toBe(-10);
+  });
+
+  it("counts the trimmed length", () => {
+    expect(describeInputLength("  hello  ").count).toBe(5);
   });
 });

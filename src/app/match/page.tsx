@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MIN_INPUT_LENGTH,
   DEFAULT_TONE,
+  describeInputLength,
   SUGGESTION_TONES,
   type AnalysisResult,
   type SuggestionTone,
@@ -218,14 +219,12 @@ export default function MatchPage() {
           label="Your resume"
           value={resume}
           onChange={setResume}
-          ready={resumeReady}
           placeholder="Paste your resume text here…"
         />
         <Field
           label="Job description"
           value={jobDescription}
           onChange={setJobDescription}
-          ready={jobReady}
           placeholder="Paste the job description here…"
         />
 
@@ -394,21 +393,36 @@ function Field({
   label,
   value,
   onChange,
-  ready,
   placeholder,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  ready: boolean;
   placeholder: string;
 }) {
+  const info = describeInputLength(value);
+  const countColor =
+    info.state === "over"
+      ? "text-red-600"
+      : info.state === "near-limit"
+        ? "text-amber-600"
+        : info.state === "ok"
+          ? "text-green-600"
+          : "text-zinc-400";
+  const border =
+    info.state === "over"
+      ? "border-red-400 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900"
+      : "border-zinc-300 focus:border-indigo-500 focus:ring-indigo-200 dark:border-zinc-700 dark:focus:ring-indigo-900";
+
   return (
     <label className="flex flex-col">
       <span className="mb-2 flex items-center justify-between text-sm font-medium">
         {label}
-        <span className={ready ? "text-green-600" : "text-zinc-400"}>
-          {value.trim().length} chars
+        <span className={countColor}>
+          {info.count.toLocaleString()} chars
+          {info.state === "near-limit" && ` · ${info.remaining.toLocaleString()} left`}
+          {info.state === "over" &&
+            ` · ${Math.abs(info.remaining).toLocaleString()} over limit`}
         </span>
       </span>
       <textarea
@@ -416,7 +430,8 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={14}
-        className="resize-y rounded-lg border border-zinc-300 bg-white p-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:ring-indigo-900"
+        aria-invalid={info.state === "over"}
+        className={`resize-y rounded-lg border bg-white p-3 text-sm outline-none focus:ring-2 dark:bg-zinc-950 ${border}`}
       />
     </label>
   );
