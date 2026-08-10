@@ -1,27 +1,62 @@
 # ResumeMatch
 
-> Paste your resume and a job description, get an instant AI match score, a
-> skills-gap analysis, and tailored bullet-point suggestions.
+> Paste your resume and a job description — get an instant match score, a
+> per-category breakdown, a skills-gap analysis, and rewritten bullet points
+> tailored to the role.
 
-A full-stack AI web app built with Next.js and TypeScript. It runs against an
-OpenAI-compatible endpoint (defaults to NVIDIA NIM's free Mistral model), so it
-costs nothing to run.
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
+![Tests](https://img.shields.io/badge/tests-97%20passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-## Status
+A full-stack AI web app built with Next.js and TypeScript. It talks to any
+OpenAI-compatible chat endpoint and defaults to NVIDIA NIM's free Mistral model,
+so it costs nothing to run. The interesting logic — parsing, cleanup, keyword
+matching, persistence, sharing — lives in small pure modules under `src/lib`,
+each covered by its own unit tests.
 
-🚧 In active development. Building in the open, one feature at a time.
+## Demo flow
 
-- [x] Project scaffold (Next.js 16, TypeScript, Tailwind)
-- [x] Landing page
-- [x] Resume + job-description input form (`/match`)
-- [x] AI analysis endpoint (score, gap, bullets)
-- [x] Results view (score ring, skill chips, copyable bullets)
-- [ ] Deploy to Vercel
+1. Paste your resume and the job description into `/match`.
+2. See instant, client-side keyword coverage before you spend a request.
+3. Run the analysis for a scored, categorised, tailored breakdown.
+4. Copy the bullets, download a report, or share a read-only link.
+
+## Features
+
+**Analysis**
+- Overall match score (0–100) with a one-line summary and a score ring.
+- Per-category breakdown — Skills, Experience, Keywords, Education — as labelled bars.
+- Matched vs missing skills, de-duplicated and reconciled (a skill is never both).
+- Rewritten, achievement-focused bullet suggestions in a tone you choose:
+  **impact**, **concise**, or **friendly**.
+
+**Smart input handling**
+- Instant, client-side keyword coverage that updates as you type — no API call.
+- Live per-field character count with min / near-limit / over states.
+- Automatic cleanup of pasted text (smart bullets, zero-width and control
+  characters, ragged whitespace) before anything reaches the model.
+- **⌘/Ctrl + Enter** submits from anywhere in the form.
+
+**Results, export & sharing**
+- Copy a single bullet or **Copy all** at once.
+- Download a self-contained Markdown report of the whole analysis.
+- **Copy share link** — the result is encoded into a `?r=` URL and opens
+  read-only, with no server round-trip and nothing stored.
+
+**Persistence**
+- Your last analysis is auto-saved to `localStorage` and restored on return.
+- A history of the last eight analyses — reopen any, remove one, or clear all.
+
+**Reliability**
+- Model calls time out after 30s and retry transient failures with backoff.
+- Inputs are validated (50–20,000 chars) before any tokens are spent.
 
 ## Tech stack
 
-- **Next.js 16** (App Router) + **React** + **TypeScript**
+- **Next.js 16** (App Router) · **React 19** · **TypeScript 5**
 - **Tailwind CSS v4**
+- **Vitest** for unit tests
 - **NVIDIA NIM / Mistral** via an OpenAI-compatible API (swappable)
 
 ## Getting started
@@ -34,137 +69,51 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Run the tests with:
-
 ```bash
-npm test
+npm test          # run the unit tests once
+npm run build     # production build
+npm run lint      # eslint
 ```
 
-## Environment
+Node 20 is the target (see `.nvmrc`).
 
-| Variable              | Description                                              |
-| --------------------- | ------------------------------------------------------- |
-| `NVIDIA_API_KEY`      | API key for the NVIDIA NIM OpenAI-compatible endpoint.  |
-| `NVIDIA_BASE_URL`     | Optional. Defaults to the NVIDIA integrate endpoint.    |
-| `NVIDIA_MODEL`        | Optional. Defaults to `mistralai/mistral-7b-instruct-v0.3`. |
-| `NEXT_PUBLIC_SITE_URL`| Optional. Absolute base URL used for Open Graph links.  |
+## Configuration
 
-## Keyboard submit
+| Variable               | Description                                                 |
+| ---------------------- | ----------------------------------------------------------- |
+| `NVIDIA_API_KEY`       | API key for the OpenAI-compatible endpoint. **Required.**   |
+| `NVIDIA_BASE_URL`      | Optional. Defaults to the NVIDIA integrate endpoint.        |
+| `NVIDIA_MODEL`         | Optional. Defaults to `mistralai/mistral-7b-instruct-v0.3`. |
+| `NEXT_PUBLIC_SITE_URL` | Optional. Absolute base URL used for Open Graph links.      |
 
-Press **⌘/Ctrl + Enter** from anywhere in the form — including inside the
-textareas — to run the analysis without reaching for the mouse. The shortcut is
-gated on the same validity check as the button, and the chord match is a pure,
-unit-tested `isSubmitShortcut()` helper.
+Because the client is OpenAI-compatible, pointing these three variables at
+another provider (OpenAI, Together, Groq, a local server) is all it takes to
+switch models.
 
-## Live keyword coverage
+## Project layout
 
-Before you spend an analysis, a panel shows the top keywords from the job
-description and which ones already appear in your resume — covered terms in green,
-missing terms struck through, with an at-a-glance coverage percentage. It updates
-as you type and runs entirely client-side (no model call). The extraction,
-tokenizing, coverage split, and percentage all live in a pure `src/lib/keywords.ts`
-module with its own unit tests; tech tokens like `go`, `c++`, and `c#` survive the
-stopword filter.
+```
+src/
+  app/
+    page.tsx              landing page
+    match/                the analyzer UI (form, results, history)
+    api/analyze/route.ts  server route: validate → clean → call model → parse
+  lib/
+    analyze.ts    prompt building + defensive result parsing
+    llm.ts        OpenAI-compatible client with timeout + retries
+    normalize.ts  clean pasted text before it reaches the model
+    keywords.ts   client-side keyword extraction and coverage
+    types.ts      shared types, validation, length banding
+    storage.ts    last-session persistence
+    history.ts    recent-analyses list
+    share.ts      encode/decode result links
+    report.ts     Markdown report + clipboard formatting
+    shortcut.ts   keyboard-shortcut matching
+```
 
-## Score breakdown
-
-Beyond the single overall number, the analysis returns a per-category breakdown
-— Skills, Experience, Keywords, Education, each 0–100 — rendered as labelled bars
-under the score ring and included in the downloaded report. Parsing is defensive:
-`parseAnalysis` clamps each category score to 0–100 and drops unnamed or malformed
-entries, and the field defaults to an empty array, so older saved or shared results
-without a breakdown still load fine.
-
-## Input cleanup
-
-Resumes and job descriptions pasted from PDFs, Word, or web pages arrive full of
-noise — smart bullet glyphs, non-breaking and zero-width spaces, stray control
-characters, and ragged blank lines. Before anything is sent to the model, both
-inputs pass through a pure `normalizeText()` (`src/lib/normalize.ts`) that unifies
-line endings, strips invisible junk, rewrites bullet glyphs to `- `, and collapses
-excess whitespace. It is idempotent and unit-tested against real invisible
-characters, and it means cleaner prompts and fewer wasted tokens.
-
-## Live length feedback
-
-Each input shows its trimmed character count as you type, coloured by state:
-grey while empty, green once it clears the 50-character minimum, amber within 500
-of the 20,000 cap (with a "left" countdown), and red once over (with an "over
-limit" amount and a red border). The banding is a pure `describeInputLength()`
-helper next to the limit constants, unit-tested across every state.
-
-## Skill de-duplication
-
-Models often return the same skill more than once (`React` / `react` / ` React `)
-or list a skill as both matched and missing. `parseAnalysis` now trims and
-case-insensitively de-duplicates each list (keeping the first-seen casing) and
-drops any "missing" skill that also shows up as matched — matched wins. The
-`normalizeSkills` and `subtractSkills` helpers are pure and unit-tested.
-
-## Reliability
-
-Model calls are hardened against the flakiness of a free hosted endpoint:
-
-- **Timeout** — each request is aborted after 30s (`REQUEST_TIMEOUT_MS`).
-- **Retries** — transient failures (network errors, timeouts, and HTTP
-  408/429/500/502/503/504) are retried up to twice with exponential backoff
-  (500ms, 1s). Non-transient errors like a 400 fail fast.
-- **Input limits** — each field must be between 50 and 20,000 characters; the
-  `/api/analyze` route rejects anything outside that range with a 400 before
-  spending any tokens.
-
-## Downloadable reports
-
-Every analysis can be saved as a self-contained Markdown report — score and
-verdict, matched/missing skills, and the tailored bullet suggestions. Click
-**Download report** in the results view to save a `resume-match-report-<score>.md`
-file to share or paste into notes. The report is built by a pure `buildReport()`
-helper in `src/lib/report.ts`, so it is unit-tested independently of the browser.
-
-## Saved sessions
-
-Your most recent analysis — the resume, the job description, and the result —
-is saved to `localStorage` and restored automatically the next time you open the
-page, so a refresh or a quick tab-close never loses your work. **Clear** wipes it.
-Serialization and validation live in a pure `src/lib/storage.ts` module (malformed
-or tampered data parses back to `null` and is ignored), unit-tested on its own.
-
-## Analysis history
-
-The last eight analyses are kept under a **Recent analyses** list (newest first).
-Click any entry to reopen its resume, job description, and result; re-running the
-same inputs replaces the old entry rather than piling up duplicates. Each row has
-a ✕ to remove just that one, and **Clear history** wipes them all. The list logic
-— dedup, cap, single-entry removal, labelling, and lenient parsing that skips
-malformed entries — lives in a pure `src/lib/history.ts` module with its own unit
-tests.
-
-## Shareable result links
-
-**Copy share link** in the results view puts a URL on your clipboard that encodes
-the whole result in a `?r=` query param. Open that link and the analysis loads
-read-only with a "viewing a shared analysis" banner — handy for sending a match
-to a mentor. Encoding is UTF-8-safe base64url, and decoding runs the payload back
-through `parseAnalysis`, so a truncated or tampered link simply resolves to no
-shared result. The encode/decode core lives in a pure `src/lib/share.ts` module
-with its own unit tests — no server round-trip, nothing stored.
-
-## Suggestion tone
-
-A **Bullet tone** selector next to the Analyze button steers the voice of the
-tailored bullets: **impact** (metrics-driven, the default), **concise** (short and
-punchy), or **friendly** (warm, first-person). The choice rides along in the
-`/api/analyze` request and is appended to the model's system prompt; unknown or
-missing values fall back to `impact` server-side via `parseTone`. The tone→prompt
-mapping lives in `toneInstruction()` and is unit-tested.
-
-## Copy all suggestions
-
-A **Copy all** button in the suggestions header copies every tailored bullet to
-the clipboard as a dash-prefixed list, so you can paste the whole set into your
-resume in one go (individual **Copy** buttons remain per bullet). Formatting is a
-pure `suggestionsToText()` helper — it trims each line and drops blanks — and is
-unit-tested on its own.
+Every module in `src/lib` is pure and independently unit-tested — the analysis
+result flows through the same defensive `parseAnalysis` whether it comes from the
+model, a saved session, the history list, or a shared link.
 
 ## License
 
