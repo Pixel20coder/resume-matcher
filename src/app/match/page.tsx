@@ -22,6 +22,7 @@ import {
 } from "@/lib/history";
 import { decodeResult, SHARE_PARAM } from "@/lib/share";
 import { isSubmitShortcut } from "@/lib/shortcut";
+import { textStats, formatReadingTime } from "@/lib/textstats";
 import {
   coverageScore,
   extractKeywords,
@@ -401,6 +402,7 @@ function Field({
   placeholder: string;
 }) {
   const info = describeInputLength(value);
+  const stats = textStats(value);
   const countColor =
     info.state === "over"
       ? "text-red-600"
@@ -433,6 +435,14 @@ function Field({
         aria-invalid={info.state === "over"}
         className={`resize-y rounded-lg border bg-white p-3 text-sm outline-none focus:ring-2 dark:bg-zinc-950 ${border}`}
       />
+      {stats.words > 0 && (
+        <span className="mt-1.5 text-xs text-zinc-400">
+          {stats.words.toLocaleString()} {stats.words === 1 ? "word" : "words"} ·{" "}
+          {stats.sentences.toLocaleString()}{" "}
+          {stats.sentences === 1 ? "sentence" : "sentences"} · ~
+          {formatReadingTime(stats.readingTimeSeconds)} read
+        </span>
+      )}
     </label>
   );
 }

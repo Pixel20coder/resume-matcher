@@ -6,7 +6,7 @@
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6)
-![Tests](https://img.shields.io/badge/tests-97%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-104%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 A full-stack AI web app built with Next.js and TypeScript. It talks to any
@@ -33,7 +33,8 @@ each covered by its own unit tests.
 
 **Smart input handling**
 - Instant, client-side keyword coverage that updates as you type — no API call.
-- Live per-field character count with min / near-limit / over states.
+- Live per-field character count with min / near-limit / over states, plus a
+  word / sentence / reading-time readout.
 - Automatic cleanup of pasted text (smart bullets, zero-width and control
   characters, ragged whitespace) before anything reaches the model.
 - **⌘/Ctrl + Enter** submits from anywhere in the form.
@@ -103,6 +104,7 @@ src/
     llm.ts        OpenAI-compatible client with timeout + retries
     normalize.ts  clean pasted text before it reaches the model
     keywords.ts   client-side keyword extraction and coverage
+    textstats.ts  word / sentence / reading-time stats
     types.ts      shared types, validation, length banding
     storage.ts    last-session persistence
     history.ts    recent-analyses list
