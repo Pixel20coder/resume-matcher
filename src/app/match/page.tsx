@@ -301,7 +301,9 @@ export default function MatchPage() {
       )}
 
       {loading && <ResultsSkeleton />}
-      {!loading && result && <AnalysisResults result={result} />}
+      {!loading && result && (
+        <AnalysisResults result={result} jobDescription={jobDescription} />
+      )}
 
       {history.length > 0 && (
         <section className="mt-12 border-t border-zinc-200 pt-6 dark:border-zinc-800">

@@ -28,6 +28,8 @@ each covered by its own unit tests.
 - Overall match score (0–100) with a one-line summary and a score ring.
 - Per-category breakdown — Skills, Experience, Keywords, Education — as labelled bars.
 - Matched vs missing skills, de-duplicated and reconciled (a skill is never both).
+- Missing skills ranked by how often the job description asks for them, so the
+  gaps worth fixing first come first (three or more mentions reads as urgent).
 - Rewritten, achievement-focused bullet suggestions in a tone you choose:
   **impact**, **concise**, or **friendly**.
 
@@ -104,6 +106,7 @@ src/
     llm.ts        OpenAI-compatible client with timeout + retries
     normalize.ts  clean pasted text before it reaches the model
     keywords.ts   client-side keyword extraction and coverage
+    priority.ts   rank missing skills by job-description emphasis
     textstats.ts  word / sentence / reading-time stats
     types.ts      shared types, validation, length banding
     storage.ts    last-session persistence

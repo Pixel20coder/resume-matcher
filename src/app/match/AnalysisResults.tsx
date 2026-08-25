@@ -4,8 +4,19 @@ import { useState } from "react";
 import type { AnalysisResult, CategoryScore } from "@/lib/types";
 import { buildReport, reportFilename, suggestionsToText } from "@/lib/report";
 import { buildShareUrl } from "@/lib/share";
+import { rankMissingSkills, type RankedSkill } from "@/lib/priority";
 
-export default function AnalysisResults({ result }: { result: AnalysisResult }) {
+export default function AnalysisResults({
+  result,
+  jobDescription,
+}: {
+  result: AnalysisResult;
+  /**
+   * The job description behind this result, when it's available. Shared links
+   * carry only the result, so ranking falls back to a plain list without it.
+   */
+  jobDescription?: string;
+}) {
   return (
     <section className="mt-10 space-y-8">
       <div className="flex flex-col items-center gap-5 rounded-xl border border-zinc-200 p-6 sm:flex-row sm:items-center dark:border-zinc-800">
@@ -31,12 +42,16 @@ export default function AnalysisResults({ result }: { result: AnalysisResult }) 
           tone="good"
           empty="No overlapping skills detected."
         />
-        <ChipList
-          title="Missing skills"
-          items={result.missingSkills}
-          tone="warn"
-          empty="Nothing major missing — nice."
-        />
+        {jobDescription?.trim() ? (
+          <MissingSkills ranked={rankMissingSkills(result.missingSkills, jobDescription)} />
+        ) : (
+          <ChipList
+            title="Missing skills"
+            items={result.missingSkills}
+            tone="warn"
+            empty="Nothing major missing — nice."
+          />
+        )}
       </div>
 
       {result.suggestions.length > 0 && (
@@ -238,6 +253,53 @@ function ChipList({
             </span>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+const PRIORITY_CHIP: Record<RankedSkill["priority"], string> = {
+  high: "border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300",
+  medium:
+    "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300",
+  low: "border-zinc-300 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400",
+};
+
+function MissingSkills({ ranked }: { ranked: RankedSkill[] }) {
+  const urgent = ranked.filter((skill) => skill.priority === "high").length;
+
+  return (
+    <div className="rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
+      <h3 className="mb-3 text-sm font-semibold text-zinc-500 uppercase tracking-wide">
+        Missing skills <span className="text-zinc-400">({ranked.length})</span>
+      </h3>
+      {ranked.length === 0 ? (
+        <p className="text-sm text-zinc-500">Nothing major missing — nice.</p>
+      ) : (
+        <>
+          <p className="mb-3 text-xs text-zinc-500">
+            Sorted by how often the job description asks for them
+            {urgent > 0 && ` — ${urgent} named repeatedly`}.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {ranked.map((skill) => (
+              <span
+                key={skill.name}
+                title={
+                  skill.mentions === 0
+                    ? "Not named directly in the job description"
+                    : `Mentioned ${skill.mentions}× in the job description`
+                }
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${PRIORITY_CHIP[skill.priority]}`}
+              >
+                {skill.name}
+                {skill.mentions > 0 && (
+                  <span className="ml-1.5 opacity-60 tabular-nums">×{skill.mentions}</span>
+                )}
+              </span>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
